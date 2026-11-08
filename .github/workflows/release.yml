@@ -1,0 +1,25 @@
+# Push a tag like v1.0.1: tests run, then the addon is packaged and
+# uploaded to CurseForge / Wago (when their keys are set) and to a GitHub release.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tests
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq luajit
+          luajit tests/run.lua
+      - name: Package and upload
+        uses: BigWigsMods/packager@v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

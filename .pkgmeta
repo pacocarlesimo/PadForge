@@ -1,0 +1,7 @@
+package-as: PadForge
+
+ignore:
+  - tests
+  - media
+  - .github
+  - .luacheckrc

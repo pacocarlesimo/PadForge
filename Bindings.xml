@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="PADFORGE_TOGGLE" header="PADFORGE" category="ADDONS">
+		PadForge_Toggle()
+	</Binding>
+</Bindings>
