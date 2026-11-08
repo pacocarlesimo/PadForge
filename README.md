@@ -87,3 +87,11 @@ MIT licensed. Free, always.
 The addon is the repository's root. `luajit tests/run.lua` runs the test suite against a mock WoW client (no game needed).
 
 Releases: push a tag (`git tag v1.0.1 && git push --tags`). GitHub Actions runs the tests, packages the addon and uploads it to CurseForge and Wago when the `CF_API_KEY` / `WAGO_API_TOKEN` secrets are set.
+
+
+
+
+https://github.com/user-attachments/assets/35f312d8-d7b6-4f92-bfba-24bcba9a1543
+
+
+
