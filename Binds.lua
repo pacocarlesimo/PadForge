@@ -10,10 +10,11 @@
 --   world = true (default): only while the game, not a window, has the pad
 --   label = "what it does" (shown in the UI)
 --
--- The gamepad's focus is read, never hooked or called:
--- GamepadMode.FrameControlsManager's isUIFocused / focusedFrame fields. A window taking the pad takes our world bindings off its buttons
--- until it lets go. In combat they stay as they were at its start
--- (PLAYER_REGEN_DISABLED comes just before the lockdown).
+-- Who has the pad is read, never hooked or called: the isUIFocused field
+-- of GamepadMode.FrameControlsManager (a game window or popup is focused).
+-- While one is, our world bindings are off its buttons, until it lets go.
+-- In combat they stay as they were at its start (PLAYER_REGEN_DISABLED
+-- comes just before the lockdown).
 local _, PF = ...
 local Pad = PF.Pad
 
@@ -129,34 +130,50 @@ end
 ---------------------------------------------------------------------------
 local inCombat = false
 
+-- Whether a fight is on or about to start: true from PLAYER_REGEN_DISABLED
+-- (just before the lockdown, while bindings can still change) until it
+-- ends. What is bound then stays bound for the whole fight.
+function B.Fighting()
+    return inCombat or PF.InCombat()
+end
+
 -- (no exception for combat: at its start, a game window holding the pad
 -- keeps our world bindings off for the fight. Binding the game's pad
 -- buttons while its window has the focus taints that window's closing:
 -- "blocked from SetPreferredGamepadInteractTarget".)
 -- (fields read, never a method called: calling the game's window code
 -- from addon code taints it)
-function B.InGame()
+local function Manager()
     local manager = GamepadMode and GamepadMode.FrameControlsManager
-    if type(manager) ~= "table" then return true end
-    if manager.isUIFocused or manager.focusedFrame then return false end
-    return true
+    return type(manager) == "table" and manager or nil
+end
+
+-- Whether the player's character has the pad. A game window that is only
+-- shown does not take it: the manager keeps a focusedFrame for a popup
+-- that came by itself (an invite, a resurrect, a summon) and for a
+-- window the player stepped out of, "so it is the first thing focused
+-- when the UI is refocused", while isUIFocused stays false and the game's
+-- own A still jumps. Only isUIFocused says who has the pad.
+function B.InGame()
+    local manager = Manager()
+    return not (manager and manager.isUIFocused)
 end
 
 function B.HasFocusAPI()
-    local manager = GamepadMode and GamepadMode.FrameControlsManager
-    return type(manager) == "table"
+    return Manager() ~= nil
 end
 
--- A game frame holding the gamepad's focus (read only)
+-- The game frame that has the gamepad's focus now, or nil (read only)
 function B.FocusedFrame()
-    local manager = GamepadMode and GamepadMode.FrameControlsManager
-    return manager and manager.focusedFrame or nil
+    local manager = Manager()
+    if manager and manager.isUIFocused then return manager.focusedFrame end
+    return nil
 end
 
--- Whether a game window has the pad now: then nothing of ours may take
--- or bind the pad's buttons
+-- Whether a game window or popup has the pad now: then nothing of ours
+-- may take or bind the pad's buttons
 function B.WindowHasPad()
-    return B.FocusedFrame() ~= nil or not B.InGame()
+    return not B.InGame()
 end
 
 -- Said when one of our windows can't open over a game window
@@ -171,7 +188,6 @@ local sources = {}
 local owner = CreateFrame("Frame", "PadForgeBindings")
 B.applied = {}     -- [key] = claim
 B.conflicts = {}   -- { key, winner, loser }
-local pending = false
 
 function B.Register(name, fn, order)
     sources[#sources + 1] = { name = name, fn = fn, order = order or 50 }
@@ -197,11 +213,7 @@ function B.Collect(inGame)
 end
 
 function B.Apply()
-    if PF.InCombat() then
-        pending = true
-        return
-    end
-    pending = false
+    if PF.InCombat() then return end
     ClearOverrideBindings(owner)
     wipe(B.applied)
     wipe(B.conflicts)
@@ -227,8 +239,6 @@ function B.Apply()
             end
         end
     end
-    local n = 0
-    for key, c in pairs(B.applied) do n = n + 1 end
     PF.Fire("PF_BINDS_APPLIED", inGame)
 end
 

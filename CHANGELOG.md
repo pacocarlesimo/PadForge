@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.1
+
+Checked against the game's own UI source for 1.60.1, and tested on a simulated client that runs the game's real secure code, binding stack, focus manager and popup handler.
+
+- **Fix: popup answers never bound, and every PadForge button went dead while a popup was up.** An invite, resurrect, summon or duel popup that comes by itself doesn't take the controller, but the game still notes it as its "focused frame". PadForge read that as "a game window has the pad", so A / B never answered it, and Smart buttons, paddles and wheels were off until it closed. The same happened with a window left open after stepping back to the character. PadForge now reads only whether the game's UI is focused.
+- **Fix: raid markers.** The Markers wheel ran a script, which the game refuses (with a warning popup) until the player has allowed scripts. It now uses the game's own /tm.
+- **Fix: a second quick press of A could answer the next popup.** An answer now lets go of A / B at once.
+- **Fix: Jump and Cancel lost for a whole fight** when a fight started with an answerable popup still up. Popup answers are never bound across a fight.
+- Fix: "/pf center" and the list of elements in the middle of the screen failed with an error on the real client.
+- Fix: an error drawing the Group wheel where the game keeps unit names secret.
+- Fix: macros showed a question mark instead of their icon.
+- The right stick is found by name the way this client does it (the function used before isn't on WoW Forever).
+- **/pf selftest**: checks in the game what PadForge relies on (controller, crossbar buttons, popups, focus) and keeps the report in the saved settings.
+- Tests: tests/sim runs PadForge on the game's own Lua; tests/apicheck.lua checks every game function used against the client's documentation.
+
 ## 1.0.0
 
 First stable release.

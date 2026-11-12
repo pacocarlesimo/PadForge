@@ -10,7 +10,7 @@
 -- player clicked. A short grace time after a popup appears keeps a press
 -- meant for something else (a jump) from answering it.
 local _, PF = ...
-local A, B, Pad = PF.Actions, PF.Binds, PF.Pad
+local B, Pad = PF.Binds, PF.Pad
 
 local M = PF.NewModule("prompts", {
     title = "Popup answers",
@@ -135,6 +135,17 @@ plainYes:SetScript("OnClick", function() if active and active.kind.yes then PF.S
 local plainNo = CreateFrame("Button", "PadForgePromptNoAPI", UIParent)
 plainNo:SetScript("OnClick", function() if active and active.kind.no then PF.SafeCall("prompt no", active.kind.no) end end)
 
+-- An answer given: A / B are let go at once, not at the watcher's next
+-- look. Until then a second press would click whatever popup took the
+-- answered one's place in the same frame, with no wait.
+local function Answered()
+    if not active then return end
+    active = nil
+    PF.AfterCombat("binds", B.Apply)
+    PF.Fire("PF_PROMPT_ANSWERED")
+end
+for _, b in ipairs({ secureYes, secureNo, plainYes, plainNo }) do b:HookScript("PostClick", Answered) end
+
 -- What yes / no click for a prompt (nil: nothing)
 local function Targets(prompt)
     local yes, no
@@ -155,9 +166,13 @@ end
 
 B.Register("prompts", function()
     if not (M.running and active and active.ready) then return {} end
+    -- (never across a fight: bindings can't change during one, so an
+    -- answer bound as it starts would keep A and B, and the game's Jump and
+    -- Cancel with them, until it ends, popup or no popup)
+    if B.Fighting() then return {} end
     -- (a game window holding the pad, the popup included, answers its own
     -- buttons: binding them then taints its closing)
-    if B.FocusedFrame() then return {} end
+    if B.WindowHasPad() then return {} end
     local s = Section()
     local claims = {}
     if active.yesTarget then
@@ -238,6 +253,8 @@ watch:SetScript("OnUpdate", function(_, elapsed)
     if had or now then PF.AfterCombat("binds", B.Apply) end
     ShowHint()
 end)
+
+PF.On("PF_PROMPT_ANSWERED", function() ShowHint() end)
 
 PF.On("PF_BINDS_APPLIED", function()
     if active then

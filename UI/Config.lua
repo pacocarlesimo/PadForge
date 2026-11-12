@@ -99,7 +99,7 @@ function Config.Show(pageId)
         return
     end
     if not PF.IsReady() then return end
-    if PF.Binds.FocusedFrame() then return PF.Binds.WaitForWindow() end
+    if PF.Binds.WindowHasPad() then return PF.Binds.WaitForWindow() end
     -- (the first time, until it's applied: the quick setup)
     if not pageId and not Config.setupOffered and PF.Setup and not PF.Setup.Done() then
         pageId = "setup"
@@ -163,7 +163,7 @@ watcher:SetScript("OnUpdate", function(_, elapsed)
     wWait = wWait - elapsed
     if wWait > 0 then return end
     wWait = 0.2
-    if Config.IsShown() and PF.Binds.FocusedFrame() then Config.Hide() end
+    if Config.IsShown() and PF.Binds.WindowHasPad() then Config.Hide() end
 end)
 
 PF.On("PLAYER_REGEN_DISABLED", function()

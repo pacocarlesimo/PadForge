@@ -146,7 +146,7 @@ check("LT + R3 opens the markers wheel", ring:IsShown() and ring:GetAttribute("p
 check("A is the wheel's while up", M.Binding("PAD1").target == "PadForgeWheelUse")
 M.SetStick(0, 1)
 r = M.Press("PADRSTICK", false)
-check("release while aiming up uses the top slot (Skull)", type(r) == "table" and r.macrotext == "/run SetRaidTarget(\"target\",8)", r and r.macrotext)
+check("release while aiming up uses the top slot (Skull)", type(r) == "table" and r.macrotext == "/tm 8", r and r.macrotext)
 check("wheel closed after use", not ring:IsShown())
 check("A back to its owner after the wheel", M.Binding("PAD1").target ~= "PadForgeWheelUse")
 M.SetStick(0, 0)
@@ -230,11 +230,29 @@ check("popup gone: A is the buttons module's again", M.Binding("PAD1") and M.Bin
 check("hint hidden", not _G.PadForgePromptHint:IsShown())
 
 -- A popup with the game's window holding the pad: left alone
+-- (focused, as the game's manager has it: isUIFocused and a focusedFrame)
+M.inGame = false
 _G.GamepadMode.FrameControlsManager.focusedFrame = _G.SomeBag or {}
 popup.which = "RESURRECT"
 popup:Show()
 M.Advance(1)
 check("focused window: no prompt binding (nor any of ours)", M.Binding("PAD1") == nil)
+popup:Hide()
+M.inGame = true
+_G.GamepadMode.FrameControlsManager.focusedFrame = nil
+M.Advance(0.5)
+
+-- A popup that came by itself (an invite): the game's manager keeps it as
+-- its focusedFrame without focusing the UI. It doesn't have the pad, so
+-- this is exactly when PadForge answers, and its other bindings stay.
+_G.GamepadMode.FrameControlsManager.focusedFrame = popup
+popup.which = "PARTY_INVITE"
+popup:Show()
+M.Advance(1)
+check("unfocused popup (focusedFrame set, UI not focused): A answers it",
+    M.Binding("PAD1") and M.Binding("PAD1").target == "PadForgePromptYes", M.Binding("PAD1") and M.Binding("PAD1").target)
+check("...and the game still counts as having no window on the pad", PF.Binds.InGame() and not PF.Binds.WindowHasPad())
+check("...and world bindings stay", M.Binding("PADPADDLE1") ~= nil)
 popup:Hide()
 _G.GamepadMode.FrameControlsManager.focusedFrame = nil
 M.Advance(0.5)
@@ -618,6 +636,7 @@ check("nothing forbidden in the code", #found == 0, table.concat(found, "\n  "))
 check("no errors overall", #PF.errors == 0, PF.errors[1])
 -- SetPreferredGamepadInteractTarget: nothing of ours on the pad while a game window has it
 local GM = _G.GamepadMode.FrameControlsManager
+M.inGame = false
 GM.focusedFrame = { name = "LootFrame" }
 M.Advance(0.3)
 check("a game window has the pad: no world bindings", M.Binding("PAD1") == nil and M.Binding("PADPADDLE1") == nil)
@@ -637,13 +656,16 @@ GM.focusedFrame = { name = "Bags" }
 M.Advance(0.3)
 PF.Config.Show("start")
 check("our window won't open over a game window", not PF.Config.IsShown())
+M.inGame = true
 GM.focusedFrame = nil
 M.Advance(0.3)
 PF.Config.Show("start")
 check("it opens once the game window is closed", PF.Config.IsShown())
+M.inGame = false
 GM.focusedFrame = { name = "Bags" }
 M.Advance(0.3)
 check("and steps aside if a game window takes the pad", not PF.Config.IsShown())
+M.inGame = true
 GM.focusedFrame = nil
 M.Advance(0.3)
 check("world bindings back when the window closes", M.Binding("PAD1") ~= nil)

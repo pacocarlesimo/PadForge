@@ -10,5 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq luajit
-      - run: luajit tests/run.lua
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq luajit lua-check
+      # The game's own UI source (its Lua and API documentation), for the
+      # API check and the simulator
+      - run: sh tests/fetch-ui-source.sh
+      - run: PF_REQUIRE_SIM=1 sh tests/run-all.sh

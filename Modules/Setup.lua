@@ -150,7 +150,7 @@ local function Queue()
         Grow()
     end)
 end
-for _, event in ipairs({ "LEARNED_SPELL_IN_TAB", "PLAYER_LEVEL_UP", "SPELLS_CHANGED" }) do
+for _, event in ipairs({ "PLAYER_LEVEL_UP", "SPELLS_CHANGED" }) do
     PF.On(event, Queue)
 end
 
