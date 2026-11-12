@@ -196,10 +196,25 @@ function Pad.Index(binding)
     end
 end
 
+-- Sticks are found by name. This client has no StickConfigNameToIndex
+-- (other clients do): its own code walks StickIndexToConfigName, and names
+-- the sticks it reads "Movement" and "Camera".
+local STICK_NAMES = { Left = { "Left", "Movement" }, Right = { "Right", "Camera" } }
+
 function Pad.StickIndex(name)
-    if C_GamePad and C_GamePad.StickConfigNameToIndex then
+    if not C_GamePad then return nil end
+    if C_GamePad.StickConfigNameToIndex then
         local ok, index = pcall(C_GamePad.StickConfigNameToIndex, name)
-        if ok and index and index >= 0 then return index + 1 end
+        if ok and type(index) == "number" and index >= 0 then return index + 1 end
+    end
+    if C_GamePad.StickIndexToConfigName then
+        for _, wanted in ipairs(STICK_NAMES[name] or { name }) do
+            for index = 0, 7 do
+                local ok, found = pcall(C_GamePad.StickIndexToConfigName, index)
+                if not ok then break end
+                if found == wanted then return index + 1 end
+            end
+        end
     end
 end
 

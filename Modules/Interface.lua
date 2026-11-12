@@ -96,8 +96,9 @@ function M.AtCenter()
                 local s = frame:GetEffectiveScale()
                 l, b, w, h = l * s, b * s, w * s, h * s
                 local area = w * h
-                local sw, sh = GetPhysicalScreenSize and GetPhysicalScreenSize()
-                local full = sw and area > sw * sh * 0.6
+                local sw, sh
+                if GetPhysicalScreenSize then sw, sh = GetPhysicalScreenSize() end
+                local full = sw and sh and area > sw * sh * 0.6
                 if not full and cx >= l and cx <= l + w and cy >= b and cy <= b + h and name ~= "UIParent" and name ~= "WorldFrame" then
                     out[#out + 1] = { name = name, label = "At the middle of the screen", area = area }
                 end
@@ -270,7 +271,7 @@ picker:SetScript("OnMouseWheel", function(_, delta) Press(delta > 0 and "UP" or 
 
 function M.StartPicker()
     if PF.InCombat() then return PF.Print("Pick after combat.") end
-    if PF.Binds.FocusedFrame() then return PF.Binds.WaitForWindow() end
+    if PF.Binds.WindowHasPad() then return PF.Binds.WaitForWindow() end
     if PF.Config and PF.Config.Hide then PF.Config.Hide() end
     chain, choice = {}, 1
     picker:Show()

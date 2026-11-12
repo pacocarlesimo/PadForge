@@ -611,7 +611,6 @@ local function Layout()
     if not w then return end
     ApplyLook()
     local n = #w.slots
-    local s = Section()
     local R = Look().radius
     view.title:SetText(w.name)
     for i, slot in ipairs(view.slots) do
@@ -768,7 +767,7 @@ end
 
 function M.StartMove()
     if PF.InCombat() then return PF.Print("Move the wheel after combat.") end
-    if B.FocusedFrame() then return B.WaitForWindow() end
+    if B.WindowHasPad() then return B.WaitForWindow() end
     if ring:IsShown() then ring:Hide() end
     local sample = wheelData[1]
     if not (sample and #sample.slots > 0) then
@@ -880,7 +879,7 @@ end
 M.Queue = Queue
 
 for _, event in ipairs({ "BAG_UPDATE_DELAYED", "GROUP_ROSTER_UPDATE", "SPELLS_CHANGED", "UPDATE_MACROS",
-    "PLAYER_EQUIPMENT_CHANGED", "NEW_MOUNT_ADDED", "QUEST_LOG_UPDATE", "COMPANION_LEARNED", "COMPANION_UPDATE", "LEARNED_SPELL_IN_TAB" }) do
+    "PLAYER_EQUIPMENT_CHANGED", "NEW_MOUNT_ADDED", "QUEST_LOG_UPDATE", "COMPANION_LEARNED", "COMPANION_UPDATE" }) do
     PF.On(event, Queue)
 end
 
@@ -957,7 +956,7 @@ end
 
 -- Open a wheel from the UI to look at it (out of combat)
 function M.Preview(index)
-    if PF.InCombat() or not wheelData[index] or B.FocusedFrame() then return end
+    if PF.InCombat() or not wheelData[index] or B.WindowHasPad() then return end
     ring:SetAttribute("pf-active", index)
     ring:SetAttribute("pf-sticky", nil)
     ring:Show()

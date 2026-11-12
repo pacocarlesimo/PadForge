@@ -6,7 +6,10 @@
 --   emote:<token>           an emote ("WAVE")
 --   say:<chan>|<text>       a chat line; chan s, p, g, ra, y, or "auto"
 --                           (raid, else party, else say)
---   marker:<0-8>            a raid marker on the target (0 clears)
+--   marker:<0-8>            a raid marker on the target (0 clears): the
+--                           game's own /tm, never /run (a script needs the
+--                           player to have allowed scripts, and asks with
+--                           a popup in the middle of a pull)
 --   target:<unit>           target a unit (player, party1, focus...)
 --   ground:<at>:<spellid>   a ground spell at your feet / the target / cursor
 --   groupnext / groupprev   the next / previous living group member
@@ -122,10 +125,16 @@ local CHANNELS = { auto = "Group", s = "Say", p = "Party", g = "Guild", ra = "Ra
 A.CHANNELS = CHANNELS
 local QUESTION = 134400
 
+-- (a unit's name can be secret on this client, where identities are
+-- restricted: testing or joining one in addon code is an error, so the
+-- plain label is used then)
 local function UnitLabel(unit)
-    if UnitExists and UnitExists(unit) and unit ~= "player" then
-        local name = UnitName(unit)
-        if name then return name end
+    if unit ~= "player" and UnitExists then
+        local exists = UnitExists(unit)
+        if not PF.IsSecret(exists) and exists then
+            local name = UnitName(unit)
+            if type(name) == "string" and not PF.IsSecret(name) and name ~= "" then return name end
+        end
     end
     return UNIT_NAMES[unit] or unit
 end
@@ -141,7 +150,8 @@ function A.Describe(action)
         local name, icon = A.ItemInfo(tonumber(value))
         return name or ("Item " .. value), icon or QUESTION
     elseif kind == "macro" then
-        local _, icon = GetMacroInfo and GetMacroInfo(value)
+        local icon
+        if GetMacroInfo then icon = select(2, GetMacroInfo(value)) end
         return value, icon or QUESTION
     elseif kind == "emote" then
         return "/" .. value:lower(), 132282
@@ -213,7 +223,7 @@ function A.Secure(action)
         return "macro", "macrotext", ChannelCommand(chan) .. " " .. SafeText(text)
     elseif kind == "marker" then
         local n = math.max(0, math.min(8, tonumber(value) or 0))
-        return "macro", "macrotext", "/run SetRaidTarget(\"target\"," .. n .. ")"
+        return "macro", "macrotext", "/tm " .. n
     elseif kind == "target" then
         return "target", nil, nil, value
     elseif kind == "ground" then

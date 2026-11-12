@@ -2,7 +2,7 @@
 ## Title: PadForge
 ## Notes: The controller addon for WoW Forever: free your face buttons, radial wheels, smart quest items, popup answers, shareable profiles. Never breaks the native gamepad UI.
 ## Author: PadForge Team
-## Version: 1.0.0
+## Version: 1.0.1
 ## X-License: MIT
 ## IconTexture: Interface\Icons\INV_Gizmo_02
 ## SavedVariables: PadForgeDB
@@ -14,6 +14,7 @@ Database.lua
 Pad.lua
 Actions.lua
 Binds.lua
+SelfTest.lua
 
 Modules\Buttons.lua
 Modules\Group.lua
